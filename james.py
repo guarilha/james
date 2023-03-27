@@ -140,7 +140,10 @@ def news(category: str, number: int, position: int, is_list: bool):
             with console.status("[bold green]TLDR'ing news...") as status:
                 news = get_top_from_hackernews(position)
                 item = news[position - 1]
-                text = get_text_from_url(item.url)
+                if item.url: 
+                    text = get_text_from_url(item.url)
+                else: 
+                    text = get_text_from_url(f"https://news.ycombinator.com/item?id={item.item_id}")
                 answer = ask_chatgpt(summarize(text))
                 s = Markdown(get_answer_text(answer, extract_code=False))
             print_news_summary(item, s)
@@ -148,7 +151,10 @@ def news(category: str, number: int, position: int, is_list: bool):
             items = get_top_from_hackernews(number)
             for item in items:
                 with console.status("[bold green]TLDR'ing news...") as status:
-                    text = get_text_from_url(item.url)
+                    if item.url: 
+                        text = get_text_from_url(item.url)
+                    else: 
+                        text = get_text_from_url(f"https://news.ycombinator.com/item?id={item.item_id}")
                     answer = ask_chatgpt(summarize(text))
                     s = Markdown(get_answer_text(answer, extract_code=False))
                 print_news_summary(item, s)
@@ -180,10 +186,11 @@ def news(category: str, number: int, position: int, is_list: bool):
         else:
             for item in items:
                 with console.status("[bold green]TLDR'ing news...") as status:
-                    text = get_text_from_url(item.get('url'))
-                    answer = ask_chatgpt(summarize(text))
-                    s = Markdown(get_answer_text(answer, extract_code=False))
-                print_news_summary(item, s)
+                    if item.get('url'): 
+                        text = get_text_from_url(item.get('url'))
+                        answer = ask_chatgpt(summarize(text))
+                        s = Markdown(get_answer_text(answer, extract_code=False))
+                        print_news_summary(item, s) 
 
 
 
