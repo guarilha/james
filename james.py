@@ -11,8 +11,6 @@ import click
 from rich.markdown import Markdown
 from rich.console import Console
 
-rich.print("\n:robot: [green]Hi, this is James reporting for duty. :brain:\n")
-
 from src.audio import play_audio, record_audio
 from src.speech import transcribe_audio, generate_audio_tts, generate_audio_uberduck
 from src.openai import ask_chatgpt, get_answer_text
@@ -21,8 +19,9 @@ console = Console()
 
 @click.group()
 def cli():
-    """Voice chat with Chat GPT."""
-    pass
+    """Voice and text interaction with Chat GPT."""
+    rich.print("\n:robot: [green]Hi, this is James reporting for duty. :brain:\n")
+    # pass
 
 @cli.command(name="ask")
 @click.option(
@@ -49,12 +48,18 @@ def cli():
     help="Upload a text or code file at the end of your prompt",
 )
 @click.option(
+    "--save",
+    "-s",
+    type=click.File('w'),
+    help="Save the answer on a file",
+)
+@click.option(
     "--no-clipboard",
     "-b",
     is_flag=True,
     help="Avoid copying code content to the clipboard",
 )
-def ask(question: str, character: str, play: str, file: str, no_clipboard: bool):
+def ask(question: str, character: str, play: str, file: str, save: str, no_clipboard: bool):
     if not question:
         with console.status("[bold red]Recording...") as status:
             filename = record_audio(filename="question.wav")
@@ -70,15 +75,22 @@ def ask(question: str, character: str, play: str, file: str, no_clipboard: bool)
     with console.status("[bold green]Thinking...") as status:
         answer = ask_chatgpt(short_message(question, character))
     
-    with console.status("[bold green]Generate answer audio file...") as status:
-        text_answer, code = get_answer_text(answer)
-        generate_audio_tts(text_answer, "output/tts_answer.wav")
-        generate_audio_uberduck(text_answer, "big-bird", "output/uberduck_answer.wav")
+    full_text_answer = get_answer_text(answer, extract_code=False)
+    text_answer, code = get_answer_text(answer)
 
     rich.print("\n\n:question: [bold cyan]Question:")
     rich.print(Markdown(question))
     rich.print("\n\n:clipboard: [bold cyan]ANSWER:")
-    rich.print(Markdown(get_answer_text(answer, extract_code=False)))
+    rich.print(Markdown(full_text_answer))
+    
+    if play:
+        with console.status("[bold green]Generate answer audio file...") as status:
+            generate_audio_tts(text_answer, "output/tts_answer.wav")
+            generate_audio_uberduck(text_answer, "big-bird", "output/uberduck_answer.wav")
+        with console.status("[bold red]Playing answer...") as status:
+            click.echo(click.style("Play Audio", fg='blue'))
+            play_audio(f"output/{play}_answer.wav")
+            click.echo()
     
     if not no_clipboard:
         copy = ""
@@ -86,12 +98,10 @@ def ask(question: str, character: str, play: str, file: str, no_clipboard: bool)
             copy += f"Code Snippet #{i+1}:\n{c[1]}\n\n"
         pyperclip.copy(copy)
 
-    if play:
-        with console.status("[bold red]Playing answer...") as status:
-            click.echo(click.style("Play Audio", fg='blue'))
-            play_audio(f"output/{play}_answer.wav")
-            click.echo()
-    
+    if save: 
+        with console.status("[bold green]Saving the answer...") as status:
+            with open(save.name, 'w') as file:
+                file.write(full_text_answer)
     rich.print("\n\n:thumbs_up: [green]Anything else? :thought_balloon:")
     
 
@@ -101,7 +111,7 @@ def ask(question: str, character: str, play: str, file: str, no_clipboard: bool)
     "-c",
     default='hackernews',
     type=click.STRING,
-    help="Category influences the source of news. Currently only 'tech' is available sourcing from Hacker News",
+    help="Search from Hacker News or selected news sites (CNN, etc)",
 )
 @click.option(
     "--number",
@@ -192,21 +202,3 @@ def print_news_summary(item, summary):
     
 
 
-
-@cli.command(name="do")
-def do():
-    with console.status("[bold red]Recording...") as status:
-        filename = record_audio(filename="question.wav")
-    
-    with console.status("[bold green]Transcribing audio...") as status:            
-        command = transcribe_audio(filename)
-    
-    with console.status("[bold green]Thinking...") as status:
-        answer = ask_chatgpt(do_command(command))
-
-    text_answer = get_answer_text(answer, extract_code=False)
-    
-    rich.print("\n\n:question: [bold cyan]Question:\n")
-    rich.print(Markdown(command))
-    rich.print("\n\n:clipboard: [bold cyan]ANSWER:\n")
-    rich.print(Markdown(text_answer))

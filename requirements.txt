@@ -1,0 +1,14 @@
+python-dotenv
+rich         
+json         
+pyperclip    
+click        
+numpy        
+pyaudio      
+wave         
+python-vlc   
+openai       
+bs4          
+TTS-api      
+uberduck     
+whisper
