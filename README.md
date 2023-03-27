@@ -35,46 +35,6 @@ With more to come...
    pip install -e .
    ```
 
-## Usage
-
-### General Help
-
-```
-james --help
-```
-
-### `ask` Command
-
-Interact with Chat GPT using voice and text.
-
-```
-james ask [OPTIONS]
-```
-
-Options:
-
-- `--question, -q QUESTION`: Bypass capturing the mic audio and speech to text.
-- `--character, -c CHARACTER`: A profession, a name of a famous person, or from fiction (movies, series, etc.).
-- `--play, -p PLAY`: Read aloud the answer at the end. Options are: tts, uberduck.
-- `--file, -f FILE`: Upload a text or code file at the end of your prompt.
-- `--save, -s SAVE`: Save the answer to a file.
-- `--no-clipboard, -b`: Avoid copying code content to the clipboard.
-
-### `news` Command
-
-Fetch news articles from sources and generate summaries.
-
-```
-james news [OPTIONS]
-```
-
-Options:
-
-- `--category, -c CATEGORY`: Search from Hacker News or selected news sites (CNN, etc.).
-- `--number, -n NUMBER`: Number of news articles you want to fetch.
-- `--position, -p POSITION`: Fetch news at a specific position.
-- `--is-list, -l`: Avoid news summaries and only print a list.
-
 ## Examples
 
 ### Speak a question and get the response from Chat GPT.
@@ -89,17 +49,18 @@ james ask
 james ask -q "What is the meaning of life?"
 ```
 
-### Ask a question as a specific character, e.g., Elon Musk.
+### Ask a question as a specific character
 
 ```
-james ask -q "How do you stay inspired?" -c "Elon Musk"
+james ask -q "How do you stay inspired?" -c "Yoda from Star Wars"
+james ask -q "How do you stay inspired?" -c "Harry Potter"
 ```
 
 ### Read aloud the answer.
 
 ```
-james ask -q "How do you solve a coding problems?" -p tts
-james ask -q "How do you solve a coding problems?" -p uberduck
+james ask -q "What are good python libraries to build CLI programs?" -p tts
+james ask -q "Why would anyone build a CLI in 2023?" -p uberduck
 ```
 
 ### Upload a file with your question.
@@ -138,3 +99,43 @@ james news -p 5
 ```
 james news -c "politics" --is-list
 ```
+
+## Docs
+
+### General Help
+
+```
+james --help
+```
+
+### `ask` Command
+
+Interact with Chat GPT using voice and text.
+
+```
+james ask [OPTIONS]
+```
+
+Options:
+
+- `--question, -q QUESTION`: Bypass capturing the mic audio and speech to text.
+- `--character, -c CHARACTER`: A profession, a name of a famous person, or from fiction (movies, series, etc.).
+- `--play, -p PLAY`: Read aloud the answer at the end. Options are: tts, uberduck.
+- `--file, -f FILE`: Upload a text or code file at the end of your prompt.
+- `--save, -s SAVE`: Save the answer to a file.
+- `--no-clipboard, -b`: Avoid copying code content to the clipboard.
+
+### `news` Command
+
+Fetch news articles from sources and generate summaries.
+
+```
+james news [OPTIONS]
+```
+
+Options:
+
+- `--category, -c CATEGORY`: Search from Hacker News or selected news sites (CNN, etc.).
+- `--number, -n NUMBER`: Number of news articles you want to fetch.
+- `--position, -p POSITION`: Fetch news at a specific position.
+- `--is-list, -l`: Avoid news summaries and only print a list.
