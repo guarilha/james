@@ -129,4 +129,8 @@ dmypy.json
 .pyre/
 
 # james specific
-output/
+output/*.txt
+output/*.wav
+output/*.json
+output/*.mp3
+output/*.mp4
