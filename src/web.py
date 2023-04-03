@@ -11,11 +11,13 @@ hn = HackerNewsApi()
 
 
 def get_text_from_url(url):
-    response = requests.get(url)
+    response = requests.get(f"{url}")
+    if not response.ok:
+        response = requests.get(f"https://webcache.googleusercontent.com/search?q=cache:{url}&strip=1&vwsrc=0")
     soup = BeautifulSoup(response.content, "html.parser")
 
-    for tag in soup.find_all(["nav", "header", "footer", "aside", "script", "meta"]):
-        tag.decompose()
+    for tag in soup.find_all(True, {"class": ["comment", "comment-tree", "comments"]}):
+         tag.decompose() 
 
     return soup.get_text()
 
@@ -59,6 +61,13 @@ def get_top_from_cnn():
 
 
 
+# def get_text_from_url(url):
+#     response = requests.get(f"https://12ft.io/proxy?q={url}")
+#     soup = BeautifulSoup(response.content, "html.parser")
 
+#     for tag in soup.find_all(["nav", "header", "footer", "aside", "script", "meta"]):
+#         tag.decompose()
+
+#     return soup.get_text()
 
 

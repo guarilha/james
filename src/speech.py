@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from TTS.api import TTS
 import uberduck
 import whisper
+import requests
 
 from src.capturing import Capturing
 
@@ -36,4 +37,24 @@ def generate_audio_uberduck(answer: str, voice: str, filepath: str):
         audio = client.speak(answer, voice=voice, play_sound=False)
         with open(filepath, mode="bw") as wav_file:
             wav_file.write(audio)
+        return audio
+    
+
+
+def generate_audio_elevenlabs(answer: str, voice: str, filepath: str):
+    with Capturing() as output:
+        audio = requests.post(f'https://api.elevenlabs.io/v1/text-to-speech/{voice}', 
+            data={
+                "text": answer,
+                "voice_settings": {
+                "stability": 0,
+                "similarity_boost": 0
+            }},
+            headers={
+                'x-api-key': os.getenv("ELEVENLABS_API_KEY")
+            }
+        )
+        
+        with open(filepath, mode="bw") as file:
+            file.write(audio)
         return audio

@@ -12,7 +12,7 @@ from rich.markdown import Markdown
 from rich.console import Console
 
 from src.audio import play_audio, record_audio
-from src.speech import transcribe_audio, generate_audio_tts, generate_audio_uberduck
+from src.speech import generate_audio_elevenlabs, transcribe_audio, generate_audio_tts, generate_audio_uberduck
 from src.openai import ask_chatgpt, get_answer_text
 
 console = Console()
@@ -39,7 +39,7 @@ def cli():
     "--play",
     "-p",
     type=click.STRING,
-    help="Read outloud the answer at end. Options are: tts, uberduck",
+    help="Read outloud the answer at end. Options are: tts, uberduck, elevenlabs",
 )
 @click.option(
     "--file",
@@ -59,7 +59,13 @@ def cli():
     is_flag=True,
     help="Avoid copying code content to the clipboard",
 )
-def ask(question: str, character: str, play: str, file: str, save: str, no_clipboard: bool):
+@click.option(
+    "--voice",
+    "-v",
+    type=click.STRING,
+    help="Voice (index, name, ID) depending on the play option (tts, uberduck, elevenlabs)",
+)
+def ask(question: str, character: str, play: str, file: str, save: str, no_clipboard: bool,  voice: str):
     if not question:
         with console.status("[bold red]Recording...") as status:
             filename = record_audio(filename="question.wav")
@@ -84,9 +90,15 @@ def ask(question: str, character: str, play: str, file: str, save: str, no_clipb
     rich.print(Markdown(full_text_answer))
     
     if play:
-        with console.status("[bold green]Generate answer audio file...") as status:
-            generate_audio_tts(text_answer, "output/tts_answer.wav")
-            generate_audio_uberduck(text_answer, "big-bird", "output/uberduck_answer.wav")
+        if play == 'tts':
+            with console.status("[bold green]Generate answer audio file...") as status:
+                generate_audio_tts(text_answer, "output/tts_answer.wav")
+        elif play == 'uberduck':
+            with console.status("[bold green]Generate answer audio file...") as status:
+                generate_audio_uberduck(text_answer, voice, "output/uberduck_answer.wav")
+        elif play == 'elevenlabs':
+            with console.status("[bold green]Generate answer audio file...") as status:
+                generate_audio_elevenlabs(text_answer, voice, "output/tts_answer.wav")
         with console.status("[bold red]Playing answer...") as status:
             click.echo(click.style("Play Audio", fg='blue'))
             play_audio(f"output/{play}_answer.wav")
@@ -94,14 +106,18 @@ def ask(question: str, character: str, play: str, file: str, save: str, no_clipb
     
     if not no_clipboard:
         copy = ""
-        for i,c in enumerate(code):
-            copy += f"Code Snippet #{i+1}:\n{c[1]}\n\n"
+        if code:
+            for i,c in enumerate(code):
+                copy += f"Code Snippet #{i+1}:\n{c[1]}\n\n"
+        else:
+            copy = full_text_answer
         pyperclip.copy(copy)
 
     if save: 
         with console.status("[bold green]Saving the answer...") as status:
             with open(save.name, 'w') as file:
                 file.write(full_text_answer)
+    
     rich.print("\n\n:thumbs_up: [green]Anything else? :thought_balloon:")
     
 
@@ -133,7 +149,13 @@ def ask(question: str, character: str, play: str, file: str, save: str, no_clipb
     is_flag=True,
     help="Avoid news summaries and only print a list",
 )
-def news(category: str, number: int, position: int, is_list: bool):
+@click.option(
+    "--save",
+    "-s",
+    type=click.File('w'),
+    help="Save the answer on a file",
+)
+def news(category: str, number: int, position: int, is_list: bool, save: str):
     rich.print("\n:clipboard: [bold cyan]ANSWER:")
     if category == 'hackernews':
         if position:
@@ -144,19 +166,27 @@ def news(category: str, number: int, position: int, is_list: bool):
                     text = get_text_from_url(item.url)
                 else: 
                     text = get_text_from_url(f"https://news.ycombinator.com/item?id={item.item_id}")
+                
                 answer = ask_chatgpt(summarize(text))
-                s = Markdown(get_answer_text(answer, extract_code=False))
+                if answer: 
+                    s = Markdown(get_answer_text(answer, extract_code=False))
+                else:
+                    s = f"Sorry, your question was too long or we had a problem accessing the LLM. For this item: {item}"
             print_news_summary(item, s)
         else:
             items = get_top_from_hackernews(number)
             for item in items:
                 with console.status("[bold green]TLDR'ing news...") as status:
-                    if item.url: 
-                        text = get_text_from_url(item.url)
+                    if item.get('url'): 
+                        text = get_text_from_url(item.get('url'))
                     else: 
                         text = get_text_from_url(f"https://news.ycombinator.com/item?id={item.item_id}")
+
                     answer = ask_chatgpt(summarize(text))
-                    s = Markdown(get_answer_text(answer, extract_code=False))
+                    if answer:
+                        s = Markdown(get_answer_text(answer, extract_code=False))
+                    else:
+                        s = f"Sorry, your question was too long or we had a problem accessing the LLM. For this item: {item}"
                 print_news_summary(item, s)
         
         rich.print("\n\n:thumbs_up: [green]Anything else? :thought_balloon:")
@@ -183,6 +213,10 @@ def news(category: str, number: int, position: int, is_list: bool):
             for item in items:
                 md += f"1. [{item.get('title')}]({item.get('url')})\n"
             rich.print(Markdown(md))
+            if save: 
+                with console.status("[bold green]Saving the answer...") as status:
+                    with open(save.name, 'w') as file:
+                        file.write(md)
         else:
             for item in items:
                 with console.status("[bold green]TLDR'ing news...") as status:
@@ -191,12 +225,11 @@ def news(category: str, number: int, position: int, is_list: bool):
                         answer = ask_chatgpt(summarize(text))
                         s = Markdown(get_answer_text(answer, extract_code=False))
                         print_news_summary(item, s) 
+            if save: 
+                with console.status("[bold green]Saving the answer...") as status:
+                    with open(save.name, 'w') as file:
+                        file.write(json.dumps(items))
 
-
-
-
-
-    
 
 def print_news_summary(item, summary):    
     rich.print()
@@ -209,3 +242,21 @@ def print_news_summary(item, summary):
     
 
 
+
+@cli.command(name="tldr")
+@click.option(
+    "--url",
+    "-u",
+    type=click.STRING,
+    help="A url to generate a summary of the text",
+)
+def tldr(url: str):
+    rich.print("\n:clipboard: [bold cyan]ANSWER:")
+    with console.status("[bold green]TLDR'ing URL...") as status:
+        text = get_text_from_url(url)
+        answer = ask_chatgpt(summarize(text))
+        s = Markdown(get_answer_text(answer, extract_code=False))
+        rich.print(s)
+            
+    rich.print("\n\n:thumbs_up: [green]Anything else? :thought_balloon:")
+    
