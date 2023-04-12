@@ -139,3 +139,19 @@ Options:
 - `--number, -n NUMBER`: Number of news articles you want to fetch.
 - `--position, -p POSITION`: Fetch news at a specific position.
 - `--is-list, -l`: Avoid news summaries and only print a list.
+
+
+## API 
+
+Start the API
+
+```
+flask run
+```
+
+And on a different terminal
+
+```
+curl -X POST -H "Content-type: application/json" -d "{\"question\" : \"I have a flask api that needs to validate the schema of a POST body, how do I do that?\"}" http://127.0.0.1:5000/ask
+```
+

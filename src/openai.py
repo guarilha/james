@@ -11,14 +11,14 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 def ask_chatgpt(question: str):
     try:
         return openai.ChatCompletion.create(
-        model="gpt-4", # 
-        messages=[
-            {
-                "role": "user",
-                "content": question,
-            }
-        ],
-    )
+            model="gpt-3.5-turbo", # gpt-4
+            messages=[
+                {
+                    "role": "user",
+                    "content": question,
+                }
+            ],
+        )
     except:
         print('deu ruim')
         return

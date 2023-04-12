@@ -12,3 +12,4 @@ bs4
 TTS-api      
 uberduck     
 whisper
+flask

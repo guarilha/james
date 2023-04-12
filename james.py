@@ -117,6 +117,10 @@ def ask(question: str, character: str, play: str, file: str, save: str, no_clipb
         with console.status("[bold green]Saving the answer...") as status:
             with open(save.name, 'w') as file:
                 file.write(full_text_answer)
+
+    with open('output/lastAnswer.json', 'w') as file:
+        file.write(answer)
+
     
     rich.print("\n\n:thumbs_up: [green]Anything else? :thought_balloon:")
     
