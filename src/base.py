@@ -21,6 +21,7 @@ def api_ask(question: str, character: str = "an AI Assistant", play: str=False, 
     text_answer, code = get_answer_text(answer)
     
     audio = None
+    audio_file = None
     if play:
         if play == 'tts':    
             audio = "output/tts_answer.wav"
